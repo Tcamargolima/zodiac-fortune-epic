@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
-export type Symbol = '🐉' | '🧧' | '🏮' | '🐂' | '🌸' | '💰' | '🐒';
+// 9 premium zodiac symbols matching the sprite assets in /public/assets/sprites/
+export type Symbol = '🐉' | '🧧' | '🏮' | '🐂' | '🌸' | '💰' | '🐒' | '🐍' | '🐯';
 
 interface GameState {
   coins: number;
@@ -17,7 +18,7 @@ interface GameState {
   clearWin: () => void;
 }
 
-const SYMBOLS: Symbol[] = ['🐉', '🧧', '🏮', '🐂', '🌸', '💰', '🐒'];
+const SYMBOLS: Symbol[] = ['🐉', '🧧', '🏮', '🐂', '🌸', '💰', '🐒', '🐍', '🐯'];
 
 const randomSymbol = (): Symbol => SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
 

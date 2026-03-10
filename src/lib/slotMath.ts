@@ -1,6 +1,6 @@
 import type { Symbol } from '@/store/useGameStore';
 
-const SYMBOLS: Symbol[] = ['🐉', '🧧', '🏮', '🐂', '🌸', '💰', '🐒'];
+const SYMBOLS: Symbol[] = ['🐉', '🧧', '🏮', '🐂', '🌸', '💰', '🐒', '🐍', '🐯'];
 
 // Symbol multipliers
 const MULTIPLIERS: Record<Symbol, number> = {
@@ -11,10 +11,12 @@ const MULTIPLIERS: Record<Symbol, number> = {
   '🐂': 4,
   '🌸': 3,
   '🐒': 2,
+  '🐍': 3,
+  '🐯': 4,
 };
 
-// Weighted random — dragon/money rarer
-const WEIGHTS: number[] = [5, 10, 12, 15, 18, 8, 20];
+// Weighted random — dragon/money rarer; serpente/tigre uncommon
+const WEIGHTS: number[] = [5, 10, 12, 15, 18, 8, 20, 14, 15];
 
 function weightedRandom(): Symbol {
   const total = WEIGHTS.reduce((a, b) => a + b, 0);

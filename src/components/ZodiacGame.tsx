@@ -2,11 +2,16 @@ import { useCallback, useEffect, useState } from 'react';
 import { useGameStore } from '@/store/useGameStore';
 import { generateGrid, evaluateWins } from '@/lib/slotMath';
 import Reel from '@/components/Reel';
+import HUD from '@/components/HUD';
+import GameStage, { useGameStage } from '@/components/GameStage';
+import ReelEngine from '@/components/ReelEngine';
 import { Volume2, VolumeX } from 'lucide-react';
 
 const BET_OPTIONS = [1, 5, 10, 50, 100];
 
-const ZodiacGame = () => {
+// ── Inner game component (needs access to GameStageContext) ──────────────────
+
+const GameInner = () => {
   const {
     coins,
     betAmount,
@@ -20,6 +25,8 @@ const ZodiacGame = () => {
     addWin,
     setSpinning,
   } = useGameStore();
+
+  const { triggerShake, triggerCoinExplosion } = useGameStage();
 
   const [muted, setMuted] = useState(true);
   const [showWinBanner, setShowWinBanner] = useState(false);
@@ -41,18 +48,22 @@ const ZodiacGame = () => {
           const winAmount = betAmount * result.totalMultiplier;
           addWin(winAmount, result.winningCells);
         }
+        // Screen shake fires when the reels stop abruptly
         setSpinning(false);
+        triggerShake();
       }, 800);
     }, 600);
-  }, [isSpinning, coins, betAmount, spin, setGrid, addWin, setSpinning]);
+  }, [isSpinning, coins, betAmount, spin, setGrid, addWin, setSpinning, triggerShake]);
 
+  // Coin particle explosion on every win
   useEffect(() => {
     if (lastWin > 0) {
       setShowWinBanner(true);
+      triggerCoinExplosion();
       const t = setTimeout(() => setShowWinBanner(false), 2500);
       return () => clearTimeout(t);
     }
-  }, [lastWin]);
+  }, [lastWin, triggerCoinExplosion]);
 
   const handleMax = () => {
     const max = Math.min(coins, 100);
@@ -87,20 +98,8 @@ const ZodiacGame = () => {
           {muted ? <VolumeX size={22} /> : <Volume2 size={22} />}
         </button>
 
-        {/* HUD */}
-        <div className="hud-panel flex items-center gap-3 px-4 py-2 rounded-xl text-sm">
-          <div className="flex flex-col items-end">
-            <span className="text-yellow-300/60 text-[10px] uppercase tracking-wider">Moedas</span>
-            <span className="zodiac-gold-text font-bold text-lg tabular-nums">
-              {coins.toLocaleString()}
-            </span>
-          </div>
-          <div className="w-px h-8 bg-yellow-500/20" />
-          <div className="flex flex-col items-start">
-            <span className="text-yellow-300/60 text-[10px] uppercase tracking-wider">RTP</span>
-            <span className="text-emerald-400 font-semibold text-sm">96.8%</span>
-          </div>
-        </div>
+        {/* Animated HUD — coin counter tweens with GSAP */}
+        <HUD coins={coins} lastWin={lastWin} />
       </div>
 
       {/* Title */}
@@ -115,13 +114,18 @@ const ZodiacGame = () => {
       {showWinBanner && (
         <div className="win-banner z-20">
           <span className="zodiac-gold-text text-2xl font-bold">
-            🎉 +{lastWin.toLocaleString()} MOEDAS!
+            🎉 +{lastWin.toLocaleString('pt-BR')} MOEDAS!
           </span>
         </div>
       )}
 
-      {/* Slot Grid */}
-      <div className="slot-frame z-10 p-3 sm:p-4 rounded-2xl mt-4">
+      {/* Slot Grid — PIXI sprite overlay (ReelEngine) renders on top of the
+          emoji fallback grid (Reel) so sprites replace emojis once loaded.   */}
+      <div className="slot-frame z-10 p-3 sm:p-4 rounded-2xl mt-4 relative">
+        {/* PIXI sprite layer with glow filter on winning symbols */}
+        <ReelEngine />
+
+        {/* Emoji fallback grid (visible before/if sprites fail to load) */}
         <div className="flex gap-1 sm:gap-2">
           {[0, 1, 2].map((colIndex) => (
             <Reel
@@ -188,5 +192,13 @@ const ZodiacGame = () => {
     </div>
   );
 };
+
+// ── Root component — wraps everything in GameStage context ───────────────────
+
+const ZodiacGame = () => (
+  <GameStage>
+    <GameInner />
+  </GameStage>
+);
 
 export default ZodiacGame;
